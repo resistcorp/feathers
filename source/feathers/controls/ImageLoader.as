@@ -7,10 +7,6 @@ accordance with the terms of the accompanying license agreement.
 */
 package feathers.controls
 {
-	import feathers.core.FeathersControl;
-	import feathers.events.FeathersEventType;
-	import feathers.skins.IStyleProvider;
-
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Loader;
@@ -28,8 +24,10 @@ package feathers.controls
 	import flash.system.ImageDecodingPolicy;
 	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
-	import flash.utils.setTimeout;
-
+	
+	import feathers.core.FeathersControl;
+	import feathers.events.FeathersEventType;
+	
 	import starling.core.RenderSupport;
 	import starling.core.Starling;
 	import starling.display.Image;
@@ -39,25 +37,9 @@ package feathers.controls
 	import starling.textures.TextureSmoothing;
 	import starling.utils.RectangleUtil;
 	import starling.utils.ScaleMode;
-	import starling.utils.SystemUtil;
 
 	/**
 	 * Dispatched when the source content finishes loading.
-	 *
-	 * <p>The properties of the event object have the following values:</p>
-	 * <table class="innertable">
-	 * <tr><th>Property</th><th>Value</th></tr>
-	 * <tr><td><code>bubbles</code></td><td>false</td></tr>
-	 * <tr><td><code>currentTarget</code></td><td>The Object that defines the
-	 *   event listener that handles the event. For example, if you use
-	 *   <code>myButton.addEventListener()</code> to register an event listener,
-	 *   myButton is the value of the <code>currentTarget</code>.</td></tr>
-	 * <tr><td><code>data</code></td><td>null</td></tr>
-	 * <tr><td><code>target</code></td><td>The Object that dispatched the event;
-	 *   it is not always the Object listening for the event. Use the
-	 *   <code>currentTarget</code> property to always access the Object
-	 *   listening for the event.</td></tr>
-	 * </table>
 	 *
 	 * @eventType starling.events.Event.COMPLETE
 	 */
@@ -65,22 +47,6 @@ package feathers.controls
 
 	/**
 	 * Dispatched if an error occurs while loading the source content.
-	 *
-	 * <p>The properties of the event object have the following values:</p>
-	 * <table class="innertable">
-	 * <tr><th>Property</th><th>Value</th></tr>
-	 * <tr><td><code>bubbles</code></td><td>false</td></tr>
-	 * <tr><td><code>currentTarget</code></td><td>The Object that defines the
-	 *   event listener that handles the event. For example, if you use
-	 *   <code>myButton.addEventListener()</code> to register an event listener,
-	 *   myButton is the value of the <code>currentTarget</code>.</td></tr>
-	 * <tr><td><code>data</code></td><td>The <code>flash.events.ErrorEvent</code>
-	 *   dispatched by the loader.</td></tr>
-	 * <tr><td><code>target</code></td><td>The Object that dispatched the event;
-	 *   it is not always the Object listening for the event. Use the
-	 *   <code>currentTarget</code> property to always access the Object
-	 *   listening for the event.</td></tr>
-	 * </table>
 	 *
 	 * @eventType feathers.events.FeathersEventType.ERROR
 	 */
@@ -134,6 +100,13 @@ package feathers.controls
 		/**
 		 * @private
 		 */
+		protected static const LOADER_CONTEXT_BYTEARRAY:LoaderContext = new LoaderContext(true);
+		LOADER_CONTEXT_BYTEARRAY.imageDecodingPolicy = ImageDecodingPolicy.ON_LOAD;
+		LOADER_CONTEXT_BYTEARRAY.checkPolicyFile = false;
+
+		/**
+		 * @private
+		 */
 		protected static const ATF_FILE_EXTENSION:String = "atf";
 
 		/**
@@ -145,15 +118,6 @@ package feathers.controls
 		 * @private
 		 */
 		protected static var textureQueueTail:ImageLoader;
-
-		/**
-		 * The default <code>IStyleProvider</code> for all <code>ImageLoader</code>
-		 * components.
-		 *
-		 * @default null
-		 * @see feathers.core.FeathersControl#styleProvider
-		 */
-		public static var globalStyleProvider:IStyleProvider;
 
 		/**
 		 * Constructor.
@@ -219,14 +183,6 @@ package feathers.controls
 		 * @private
 		 */
 		protected var _isTextureOwner:Boolean = false;
-
-		/**
-		 * @private
-		 */
-		override protected function get defaultStyleProvider():IStyleProvider
-		{
-			return ImageLoader.globalStyleProvider;
-		}
 
 		/**
 		 * @private
@@ -388,8 +344,7 @@ package feathers.controls
 		private var _textureScale:Number = 1;
 
 		/**
-		 * Scales the texture dimensions during measurement. Useful for UI that
-		 * should scale based on screen density or resolution.
+		 * The scale of the texture. Useful for UI that scales to DPI.
 		 *
 		 * <p>In the following example, the image loader's texture scale is
 		 * customized:</p>
@@ -433,8 +388,8 @@ package feathers.controls
 		 *
 		 * @default starling.textures.TextureSmoothing.BILINEAR
 		 *
-		 * @see http://doc.starling-framework.org/core/starling/textures/TextureSmoothing.html starling.textures.TextureSmoothing
-		 * @see http://doc.starling-framework.org/core/starling/display/Image.html#smoothing starling.display.Image.smoothing
+		 * @see starling.textures.TextureSmoothing
+		 * @see starling.display.Image#smoothing
 		 */
 		public function get smoothing():String
 		{
@@ -470,7 +425,7 @@ package feathers.controls
 		 *
 		 * @default 0xffffff
 		 *
-		 * @see http://doc.starling-framework.org/core/starling/display/Image.html#color starling.display.Image.color
+		 * @see starling.display.Image#color
 		 */
 		public function get color():uint
 		{
@@ -506,7 +461,7 @@ package feathers.controls
 		 *
 		 * @default flash.display3d.Context3DTextureFormat.BGRA
 		 *
-		 * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/display3D/Context3DTextureFormat.html flash.display3d.Context3DTextureFormat
+		 * @see flash.display3d.Context3DTextureFormat
 		 */
 		public function get textureFormat():String
 		{
@@ -996,9 +951,9 @@ package feathers.controls
 		 */
 		override protected function draw():void
 		{
-			var dataInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_DATA);
-			var layoutInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_LAYOUT);
-			var stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
+			const dataInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_DATA);
+			const layoutInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_LAYOUT);
+			const stylesInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_STYLES);
 			var sizeInvalid:Boolean = this.isInvalid(INVALIDATION_FLAG_SIZE);
 
 			if(dataInvalid)
@@ -1037,8 +992,8 @@ package feathers.controls
 		 */
 		protected function autoSizeIfNeeded():Boolean
 		{
-			var needsWidth:Boolean = this.explicitWidth != this.explicitWidth; //isNaN
-			var needsHeight:Boolean = this.explicitHeight != this.explicitHeight; //isNaN
+			const needsWidth:Boolean = isNaN(this.explicitWidth);
+			const needsHeight:Boolean = isNaN(this.explicitHeight);
 			if(!needsWidth && !needsHeight)
 			{
 				return false;
@@ -1050,9 +1005,9 @@ package feathers.controls
 				if(this._currentTextureWidth == this._currentTextureWidth) //!isNaN
 				{
 					newWidth = this._currentTextureWidth * this._textureScale;
-					if(this._maintainAspectRatio && !needsHeight)
+					if(!needsHeight)
 					{
-						var heightScale:Number = this.explicitHeight / (this._currentTextureHeight * this._textureScale);
+						const heightScale:Number = this.explicitHeight / (this._currentTextureHeight * this._textureScale);
 						newWidth *= heightScale;
 					}
 				}
@@ -1069,9 +1024,9 @@ package feathers.controls
 				if(this._currentTextureHeight == this._currentTextureHeight) //!isNaN
 				{
 					newHeight = this._currentTextureHeight * this._textureScale;
-					if(this._maintainAspectRatio && !needsWidth)
+					if(!needsWidth)
 					{
-						var widthScale:Number = this.explicitWidth / (this._currentTextureWidth * this._textureScale);
+						const widthScale:Number = this.explicitWidth / (this._currentTextureWidth * this._textureScale);
 						newHeight *= widthScale;
 					}
 				}
@@ -1099,12 +1054,13 @@ package feathers.controls
 			}
 			else
 			{
-				var sourceURL:String = this._source as String;
-				if(!sourceURL)
+				const sourceURL:String = this._source as String,
+					sourceBytes:ByteArray = this._source as ByteArray;
+				if(!sourceURL && !sourceBytes)
 				{
 					this._lastURL = null;
 				}
-				else if(sourceURL != this._lastURL)
+				else if(sourceURL != this._lastURL || sourceBytes)
 				{
 					this._lastURL = sourceURL;
 
@@ -1138,7 +1094,20 @@ package feathers.controls
 						}
 					}
 
-					if(sourceURL.toLowerCase().lastIndexOf(ATF_FILE_EXTENSION) == sourceURL.length - 3)
+					if(sourceBytes){
+						if(this.urlLoader)
+						{
+							this.urlLoader = null;
+						}
+						if(!this.loader)
+						{
+							this.loader = new Loader();
+						}
+						this.loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, loader_completeHandler);
+						this.loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, loader_errorHandler);
+						this.loader.contentLoaderInfo.addEventListener(SecurityErrorEvent.SECURITY_ERROR, loader_errorHandler);
+						this.loader.loadBytes(sourceBytes, LOADER_CONTEXT_BYTEARRAY);
+					}else if(sourceURL.toLowerCase().lastIndexOf(ATF_FILE_EXTENSION) == sourceURL.length - 3)
 					{
 						if(this.loader)
 						{
@@ -1326,18 +1295,6 @@ package feathers.controls
 		 */
 		protected function replaceBitmapDataTexture(bitmapData:BitmapData):void
 		{
-			if(Starling.handleLostContext && !Starling.current.contextValid)
-			{
-				trace("ImageLoader: Context lost while processing loaded image, retrying...");
-				setTimeout(replaceBitmapDataTexture, 1, bitmapData);
-				return;
-			}
-			if(!SystemUtil.isDesktop && !SystemUtil.isApplicationActive)
-			{
-				//avoiding stage3d calls when a mobile application isn't active
-				SystemUtil.executeWhenApplicationIsActive(replaceBitmapDataTexture, bitmapData);
-				return;
-			}
 			this._texture = Texture.fromBitmapData(bitmapData, false, false, 1, this._textureFormat);
 			if(Starling.handleLostContext)
 			{
@@ -1362,18 +1319,6 @@ package feathers.controls
 		 */
 		protected function replaceRawTextureData(rawData:ByteArray):void
 		{
-			if(Starling.handleLostContext && !Starling.current.contextValid)
-			{
-				trace("ImageLoader: Context lost while processing loaded image, retrying...");
-				setTimeout(replaceRawTextureData, 1, rawData);
-				return;
-			}
-			if(!SystemUtil.isDesktop && !SystemUtil.isApplicationActive)
-			{
-				//avoiding stage3d calls when a mobile application isn't active
-				SystemUtil.executeWhenApplicationIsActive(replaceRawTextureData, rawData);
-				return;
-			}
 			this._texture = Texture.fromAtfData(rawData);
 			if(Starling.handleLostContext)
 			{
@@ -1497,13 +1442,13 @@ package feathers.controls
 		{
 			if(this._pendingBitmapDataTexture)
 			{
-				var bitmapData:BitmapData = this._pendingBitmapDataTexture;
+				const bitmapData:BitmapData = this._pendingBitmapDataTexture;
 				this._pendingBitmapDataTexture = null;
 				this.replaceBitmapDataTexture(bitmapData);
 			}
 			if(this._pendingRawTextureData)
 			{
-				var rawData:ByteArray = this._pendingRawTextureData;
+				const rawData:ByteArray = this._pendingRawTextureData;
 				this._pendingRawTextureData = null;
 				this.replaceRawTextureData(rawData);
 			}
@@ -1542,14 +1487,14 @@ package feathers.controls
 		 */
 		protected function loader_completeHandler(event:flash.events.Event):void
 		{
-			var bitmap:Bitmap = Bitmap(this.loader.content);
+			const bitmap:Bitmap = Bitmap(this.loader.content);
 			this.loader.contentLoaderInfo.removeEventListener(flash.events.Event.COMPLETE, loader_completeHandler);
 			this.loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, loader_errorHandler);
 			this.loader.contentLoaderInfo.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, loader_errorHandler);
 			this.loader = null;
 
 			this.cleanupTexture();
-			var bitmapData:BitmapData = bitmap.bitmapData;
+			const bitmapData:BitmapData = bitmap.bitmapData;
 			if(this._delayTextureCreation)
 			{
 				this._pendingBitmapDataTexture = bitmapData;
@@ -1584,7 +1529,7 @@ package feathers.controls
 		 */
 		protected function rawDataLoader_completeHandler(event:flash.events.Event):void
 		{
-			var rawData:ByteArray = ByteArray(this.urlLoader.data);
+			const rawData:ByteArray = ByteArray(this.urlLoader.data);
 			this.urlLoader.removeEventListener(flash.events.Event.COMPLETE, rawDataLoader_completeHandler);
 			this.urlLoader.removeEventListener(IOErrorEvent.IO_ERROR, rawDataLoader_errorHandler);
 			this.urlLoader.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, rawDataLoader_errorHandler);
